@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/2d572c/ffffff?text=M">
+    <title>Minimarket Mbatung - Tienda Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --verde: #2d572c;
+            --naranja: #f18a1c;
+            --amarillo: #fdb813;
+            --fondo: #f4f7f6;
+            --blanco: #ffffff;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; margin: 0; overflow: hidden; background: var(--fondo); font-family: 'Segoe UI', sans-serif; }
+
+        /* HEADER */
+        header {
+            height: 62px; background: var(--blanco); display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); position: fixed; top: 0; width: 100%; z-index: 1000;
+        }
+        .btn-top { background: var(--verde); color: white; border: none; padding: 9px 14px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 0.75rem; transition: 0.3s; }
+        .logo span { color: var(--naranja); }
+        .btn-hamburger { font-size: 1.5rem; color: var(--verde); cursor: pointer; border: none; background: none; }
+
+        /* MENU LATERAL */
+        #menu-lateral { position: fixed; top: 0; right: -100%; width: 80%; max-width: 300px; height: 100%; background: white; z-index: 4000; transition: 0.4s cubic-bezier(0.4,0,0.2,1); padding: 25px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); border-radius: 20px 0 0 20px; }
+        #menu-lateral.active { right: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 3500; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+
+        /* MAIN SCROLLABLE */
+        main { height: calc(100% - 62px - 100px); margin-top: 62px; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        main::-webkit-scrollbar { display: none; }
+
+        /* ANIMACIONES */
+        @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+        /* INICIO */
+        .home-content { padding-bottom: 30px; animation: fadeIn 0.4s ease; }
+
+        /* HERO SLIDER */
+        .hero-slider { position: relative; height: 185px; margin: 12px; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
+        .hero-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; opacity: 0; transition: opacity 0.7s ease; background-size: cover; background-position: center; background-image: var(--bg-img); }
+        .hero-slide.active { opacity: 1; }
+        .hero-slide::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.38); }
+        .hero-slide h2 { position: relative; margin: 0 0 6px; font-size: 1.55rem; color: var(--amarillo); }
+        .hero-slide p  { position: relative; margin: 0; font-size: 0.88rem; opacity: 0.92; }
+        .hero-dots { position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: center; gap: 6px; z-index: 2; }
+        .hero-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.45); cursor: pointer; transition: 0.3s; }
+        .hero-dot.active { background: white; transform: scale(1.3); }
+        /* FLASH STRIP */
+        .flash-strip { margin: 6px 12px; background: linear-gradient(135deg,#d9534f,#f18a1c); border-radius: 14px; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; color: white; }
+        .flash-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .flash-sub   { font-size: 0.72rem; margin-top: 2px; opacity: 0.9; }
+        .flash-timer { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+        /* PROMO GRID */
+        .promo-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 12px; }
+        .promo-card  { border-radius: 18px; overflow: hidden; position: relative; height: 110px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+        .promo-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.4s; }
+        .promo-card:hover img { transform: scale(1.06); }
+        .promo-label { position: absolute; inset: 0; background: linear-gradient(to top,rgba(0,0,0,0.55),transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 12px; color: white; }
+        .promo-label strong { font-size: 0.82rem; line-height: 1.2; }
+        .promo-label span   { font-size: 0.7rem; color: var(--amarillo); font-weight: 800; }
+
+        .section-title { padding: 18px 18px 6px; font-weight: 800; color: var(--verde); font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .scroll-packs { display: flex; overflow-x: auto; padding: 8px 18px 14px; gap: 14px; scrollbar-width: none; }
+        .scroll-packs::-webkit-scrollbar { display: none; }
+        .card-pack { flex: 0 0 240px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.06); border: 1px solid #eee; transition: 0.3s; }
+        .card-pack:hover { transform: translateY(-4px); }
+        .pack-img { height: 120px; width: 100%; object-fit: cover; }
+        .pack-body { padding: 13px; }
+
+        /* GRID PRODUCTOS */
+        .grid-store { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 13px; padding: 13px; max-width: 1200px; margin: auto; animation: fadeIn 0.3s ease; }
+        .card-item { background: white; border-radius: 18px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; border: 1px solid #f0f0f0; transition: 0.3s; }
+        .card-item:hover { transform: translateY(-5px); box-shadow: 0 8px 18px rgba(0,0,0,0.09); }
+        .item-pic { height: 128px; width: 100%; overflow: hidden; }
+        .item-pic img { width: 100%; height: 100%; object-fit: cover; transition: 0.4s; }
+        .card-item:hover .item-pic img { transform: scale(1.06); }
+        .item-info { padding: 11px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; text-align: center; }
+        .item-info h3 { margin: 0 0 4px; font-size: 0.82rem; height: 32px; overflow: hidden; color: #333; line-height: 1.3; }
+        .item-price { font-size: 1.05rem; font-weight: 800; color: var(--verde); margin: 5px 0; }
+        .btn-comprar { background: var(--naranja); color: white; border: none; padding: 9px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+        .btn-comprar:active { transform: scale(0.95); background: var(--verde); }
+
+        /* UTILIDADES */
+        .hidden { display: none !important; }
+        .pack-body h4 { margin: 0 0 4px; }
+        .pack-price { font-size: 1.05rem; font-weight: 800; color: var(--verde); margin: 6px 0; }
+        .basket-emoji { font-size: 23px; }
+        .close-icon { font-size: 1.5rem; cursor: pointer; }
+
+        /* TÍTULO DE CATEGORÍA EN TIENDA */
+        .cat-header { display: flex; align-items: center; gap: 10px; padding: 16px 15px 4px; }
+        .cat-header .cat-icon { font-size: 1.6rem; }
+        .cat-header h2 { margin: 0; font-size: 1.1rem; color: var(--verde); font-weight: 800; }
+
+        /* ─── BARRA INFERIOR: cesta central + curva SVG ─── */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 90px;
+            z-index: 2000; display: flex; align-items: stretch;
+        }
+        /* SVG fondo blanco con curva en el centro */
+        .nav-curve-svg {
+            position: absolute; top: -26px; left: 0;
+            width: 100%; height: calc(100% + 26px);
+            fill: white; z-index: 0;
+            filter: drop-shadow(0 -3px 8px rgba(0,0,0,0.08));
+        }
+        /* Layout interno encima del SVG */
+        .nav-inner {
+            position: relative; z-index: 1;
+            width: 100%; display: flex; align-items: center;
+        }
+        /* Paneles laterales — botones repartidos uniformemente */
+        .nav-side-scroll {
+            flex: 1; display: flex; align-items: center;
+            overflow-x: auto; scrollbar-width: none;
+            height: 100%; padding-top: 12px; min-width: 0;
+        }
+        .nav-side-scroll::-webkit-scrollbar { display: none; }
+        /* Panel izquierdo: RTL para que click-near-basket siempre visible */
+        .nav-left { direction: rtl; }
+        .nav-left .nav-button { direction: ltr; }
+        .nav-right { direction: ltr; }
+        /* Cesta central fija */
+        .basket-center {
+            flex: 0 0 80px; display: flex; flex-direction: column;
+            align-items: center; position: relative; top: -18px;
+            cursor: pointer; z-index: 2;
+        }
+        .basket-round {
+            width: 64px; height: 64px; background: var(--verde); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 5px solid white; box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            cursor: pointer; transition: 0.3s; position: relative;
+        }
+        .basket-round.anim-pop { animation: pop 0.4s ease; }
+        .count-badge {
+            position: absolute; top: -4px; right: -4px; background: var(--naranja);
+            color: white; width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: bold; border: 2px solid white; z-index: 10;
+        }
+        .basket-label { font-size: 0.5rem; font-weight: 800; color: var(--verde); text-transform: uppercase; margin-top: 4px; }
+        /* Botón de categoría — flex:1 para rellenar el espacio sin huecos */
+        .nav-button {
+            flex: 1; min-width: 50px; border: none; background: none;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; padding: 6px 2px; border-radius: 12px; transition: 0.25s;
+        }
+        .nav-button:hover, .nav-button.active { background: #eef7ed; }
+        .nav-button .nav-img-wrap {
+            width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+            border: 2.5px solid #e8e8e8; transition: 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        .nav-button img { width: 100%; height: 100%; object-fit: cover; }
+        .nav-button:hover .nav-img-wrap,
+        .nav-button.active .nav-img-wrap {
+            border-color: var(--verde);
+            transform: translateY(-6px) scale(1.15);
+            box-shadow: 0 6px 14px rgba(45,87,44,0.22);
+        }
+        .nav-button span { font-size: 0.52rem; font-weight: 800; color: #999; text-transform: uppercase; margin-top: 5px; transition: 0.2s; }
+        .nav-button:hover span, .nav-button.active span { color: var(--verde); }
+
+        /* MODAL CESTA PREMIUM */
+        #modal-cesta {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; align-items: flex-end; justify-content: center; z-index: 5000;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            animation: fadeIn 0.3s ease;
+        }
+        .cesta-popup {
+            width: 100%; max-width: 500px; background: white;
+            border-radius: 30px 30px 0 0; padding: 25px;
+            max-height: 85%; display: flex; flex-direction: column;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+        }
+        .header-cesta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-cesta h2 { margin: 0; color: var(--verde); font-size: 1.3rem; }
+        .header-cesta .close-x { font-size: 32px; cursor: pointer; color: #ccc; line-height: 1; }
+        
+        .cesta-body { flex-grow: 1; overflow-y: auto; padding: 10px 0; scrollbar-width: none; }
+        .cesta-body::-webkit-scrollbar { display: none; }
+        
+        #lista-cesta { margin-bottom: 15px; }
+        
+        .item-cesta { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+        .item-cesta b { font-size: 0.92rem; color: #333; }
+        .item-cesta small { color: #888; font-size: 0.8rem; }
+        .btn-borrar { color: #ff4d4d; border: none; background: none; font-size: 1.3rem; cursor: pointer; padding: 0 4px; }
+        
+        .footer-cesta { margin-top: 20px; border-top: 2px solid #eee; padding-top: 18px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.4rem; font-weight: 800; color: var(--verde); margin-bottom: 15px; }
+        .total-label { color: #aaa; }
+        
+        .btn-confirmar {
+            background: #25d366; color: white; width: 100%; padding: 17px;
+            border-radius: 14px; font-weight: bold; border: none; font-size: 1.05rem;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(37,211,102,0.2);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-confirmar:active { transform: scale(0.96); }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+        /* TOAST NOTIFICATION */
+        .toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: var(--verde); color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 0.85rem; font-weight: bold;
+            z-index: 6000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            opacity: 0; pointer-events: none; transition: 0.4s;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+
+        /* MENU LATERAL PREMIUM */
+        .menu-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f8f8f8; padding-bottom: 15px; margin-bottom: 20px; }
+        .menu-link { text-decoration: none; color: #444; display: flex; align-items: center; gap: 12px; padding: 16px; background: #f8fbf8; border-radius: 15px; margin-bottom: 12px; font-weight: bold; transition: 0.2s; }
+        .menu-link i { color: var(--verde); font-size: 1.1rem; }
+        .menu-link:active { background: #eef7ed; transform: translateX(5px); }
+        .menu-header h3 { margin: 0; color: var(--verde); }
+
+        .modal-open { overflow: hidden; }
+
+        /* FORMULARIO CESTA */
+        .cesta-form { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 800; color: #555; margin-bottom: 8px; text-transform: uppercase; }
+        .delivery-options { display: flex; gap: 10px; margin-bottom: 15px; }
+        .delivery-option { flex: 1; position: relative; }
+        .delivery-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .delivery-box { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 12px; border: 2px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-align: center; font-size: 0.75rem; font-weight: bold; color: #777;
+        }
+        .delivery-box i { font-size: 1.2rem; margin-bottom: 5px; }
+        .delivery-option input:checked + .delivery-box { border-color: var(--verde); background: #f0faf0; color: var(--verde); }
+        
+        .form-input { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd;
+            font-size: 0.9rem; margin-bottom: 12px; outline: none; transition: 0.2s;
+        }
+        .form-input:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(45,87,44,0.1); }
+        .form-textarea { min-height: 80px; resize: none; font-family: inherit; }
+        
+        .file-upload-wrap {
+            position: relative; border: 2px dashed #ddd; border-radius: 12px;
+            padding: 15px; text-align: center; cursor: pointer; transition: 0.3s;
+            margin-bottom: 12px; background: #fafafa;
+        }
+        .file-upload-wrap:hover { border-color: var(--verde); background: #f0faf0; }
+        .file-upload-wrap input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .file-upload-wrap i { font-size: 1.4rem; color: var(--verde); margin-bottom: 6px; display: block; }
+        .file-upload-wrap span { font-size: 0.75rem; color: #666; font-weight: bold; }
+        .logo { font-weight: 800; color: var(--verde); font-size: 1rem; text-transform: uppercase; text-align: center; flex-grow: 1; letter-spacing: 1px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* RESPONSIVIDAD MÓVIL ESPECÍFICA */
+        @media (max-width: 380px) {
+            .logo { font-size: 0.85rem; }
+            .grid-store { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+            .hero-slider { height: 160px; }
+            .hero-slide h2 { font-size: 1.3rem; }
+            .section-title { font-size: 0.75rem; padding: 15px 12px 5px; }
+            .promo-cards { gap: 8px; padding: 0 8px; }
+            .promo-card { height: 95px; }
+            .card-pack { flex: 0 0 210px; }
+            .item-pic { height: 110px; }
+            .item-info h3 { font-size: 0.75rem; height: 30px; }
+            .item-price { font-size: 0.95rem; }
+            .btn-comprar { font-size: 0.72rem; padding: 7px; }
+            .cesta-popup { padding: 15px; }
+        }
+
+        @media (min-width: 768px) {
+            .hero-slider { height: 320px; }
+            .hero-slide h2 { font-size: 2.5rem; }
+            .hero-slide p { font-size: 1.2rem; }
+            .promo-cards { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+            .promo-card { height: 180px; }
+            .section-title { font-size: 1.1rem; padding: 30px 20px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="btn-top" onclick="verInicio()" aria-label="Volver a Inicio"><i class="fa-solid fa-house"></i> INICIO</button>
+    <div class="logo">MINIMARKET <span>MBATUNG</span></div>
+    <button class="btn-hamburger" onclick="toggleMenu()" aria-label="Abrir Menú"><i class="fa-solid fa-bars-staggered"></i></button>
+</header>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<div id="menu-lateral">
+    <div class="menu-header">
+        <h3>Menú Usuario</h3>
+        <i class="fa-solid fa-xmark close-icon" onclick="toggleMenu()"></i>
+    </div>
+    <a href="#" class="menu-link"><i class="fa-solid fa-gear"></i> Configuración</a>
+    <a href="#" class="menu-link"><i class="fa-solid fa-headset"></i> Soporte Técnico</a>
+    <a href="#" class="menu-link"><i class="fa-solid fa-tag"></i> Ofertas Especiales</a>
+</div>
+
+<div id="toast" class="toast">Añadido a la cesta ✨</div>
+
+<main id="main-scroller">
+    <!-- INICIO -->
+    <section id="sec-inicio" class="home-content">
+
+        <!-- HERO SLIDER -->
+        <div class="hero-slider" id="hero-slider">
+            <div class="hero-slide active" style="--bg-img:url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800')">
+                <h2>¡OFERTAS DEL DÍA! 🔥</h2><p>Frutas y carnes 100% frescas cada mañana</p>
+            </div>
+            <div class="hero-slide" style="--bg-img:url('https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&q=80&w=800')">
+                <h2>CARNES FRESCAS 🥩</h2><p>Bistec, pollo y cordero al mejor precio</p>
+            </div>
+            <div class="hero-slide" style="--bg-img:url('https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=800')">
+                <h2>FRUTAS TROPICALES 🍍</h2><p>Mango, piña, papaya — directo del campo</p>
+            </div>
+            <div class="hero-slide" style="--bg-img:url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800')">
+                <h2>PANADERÍA ARTESANA 🥖</h2><p>Pan del día, croissants y bollos frescos</p>
+            </div>
+            <div class="hero-dots" id="hero-dots"></div>
+        </div>
+
+        <!-- FLASH DEAL -->
+        <div class="flash-strip">
+            <div><div class="flash-label">⚡ Oferta Flash del día</div><div class="flash-sub">Packs ahorro con hasta 30% dto.</div></div>
+            <div class="flash-timer" id="flash-timer">--:--:--</div>
+        </div>
+
+        <!-- CATEGORIAS EN PROMO -->
+        <div class="section-title">🌟 CATEGORÍAS EN OFERTA</div>
+        <div class="promo-cards">
+            <div class="promo-card" onclick="irTienda('carnes','n-carnes')">
+                <img src="https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=400" alt="Carnes">
+                <div class="promo-label"><strong>Carnes Frescas</strong><span>-20% HOY</span></div>
+            </div>
+            <div class="promo-card" onclick="irTienda('frutas','n-frutas')">
+                <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=400" alt="Frutas">
+                <div class="promo-label"><strong>Frutas del Día</strong><span>Desde 900 FCFA</span></div>
+            </div>
+            <div class="promo-card" onclick="irTienda('pescaderia','n-peces')">
+                <img src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=400" alt="Pescado">
+                <div class="promo-label"><strong>Pescado Fresco</strong><span>Llegada esta mañana</span></div>
+            </div>
+            <div class="promo-card" onclick="irTienda('lacteos','n-lacteos')">
+                <img src="https://images.unsplash.com/photo-1559598467-f8b76c8155d0?q=80&w=400" alt="Lácteos">
+                <div class="promo-label"><strong>Lácteos &amp; Huevos</strong><span>Pack ahorro -15%</span></div>
+            </div>
+            <div class="promo-card" onclick="irTienda('bebidas','n-bebidas')">
+                <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=400" alt="Bebidas">
+                <div class="promo-label"><strong>Bebidas Frescas</strong><span>2x1 en agua mineral</span></div>
+            </div>
+            <div class="promo-card" onclick="irTienda('panaderia','n-panaderia')">
+                <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400" alt="Panadería">
+                <div class="promo-label"><strong>Panadería</strong><span>Baguette a 450 FCFA</span></div>
+            </div>
+        </div>
+
+        <!-- PACKS -->
+        <div class="section-title">📦 CESTAS Y PACKS AHORRO</div>
+        <div class="scroll-packs">
+            <div class="card-pack">
+                <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=500" class="pack-img" alt="Cesta">
+                <div class="pack-body"><h4>Cesta Familiar Básica</h4><p class="pack-price">12.500 FCFA</p><button class="btn-comprar" onclick="sumar('Cesta Familiar Básica',12500)">AÑADIR PACK</button></div>
+            </div>
+            <div class="card-pack">
+                <img src="https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&q=80&w=500" class="pack-img" alt="Carne">
+                <div class="pack-body"><h4>Pack Carnicería Pro</h4><p class="pack-price">19.800 FCFA</p><button class="btn-comprar" onclick="sumar('Pack Carnicería Pro',19800)">AÑADIR PACK</button></div>
+            </div>
+            <div class="card-pack">
+                <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=500" class="pack-img" alt="Frutas">
+                <div class="pack-body"><h4>Pack Frutas &amp; Verduras</h4><p class="pack-price">8.500 FCFA</p><button class="btn-comprar" onclick="sumar('Pack Frutas',8500)">AÑADIR PACK</button></div>
+            </div>
+            <div class="card-pack">
+                <img src="https://images.unsplash.com/photo-1559598467-f8b76c8155d0?auto=format&fit=crop&q=80&w=500" class="pack-img" alt="Lácteos">
+                <div class="pack-body"><h4>Pack Desayuno Completo</h4><p class="pack-price">6.200 FCFA</p><button class="btn-comprar" onclick="sumar('Pack Desayuno',6200)">AÑADIR PACK</button></div>
+            </div>
+            <div class="card-pack">
+                <img src="https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&q=80&w=500" class="pack-img" alt="Limpieza">
+                <div class="pack-body"><h4>Pack Hogar Limpio</h4><p class="pack-price">7.900 FCFA</p><button class="btn-comprar" onclick="sumar('Pack Hogar Limpio',7900)">AÑADIR PACK</button></div>
+            </div>
+        </div>
+
+        <!-- NOVEDADES -->
+        <div class="section-title">✨ NOVEDADES DE LA SEMANA</div>
+        <div class="grid-store">
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1550583724-125581fe2f8a?q=80&w=300" alt="Leche"></div><div class="item-info"><h3>Leche Gourmet</h3><div class="item-price">1.350 FCFA</div><button class="btn-comprar" onclick="sumar('Leche Gourmet',1350)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=300" alt="Frutas"></div><div class="item-info"><h3>Mix Frutas Tropicales</h3><div class="item-price">2.100 FCFA</div><button class="btn-comprar" onclick="sumar('Mix Frutas',2100)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=300" alt="Arroz"></div><div class="item-info"><h3>Arroz Basmati 1kg</h3><div class="item-price">1.800 FCFA</div><button class="btn-comprar" onclick="sumar('Arroz Basmati',1800)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=300" alt="Bistec"></div><div class="item-info"><h3>Bistec Ternera 1kg</h3><div class="item-price">4.800 FCFA</div><button class="btn-comprar" onclick="sumar('Bistec Ternera',4800)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300" alt="Pan"></div><div class="item-info"><h3>Baguette Artesano</h3><div class="item-price">450 FCFA</div><button class="btn-comprar" onclick="sumar('Baguette',450)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=300" alt="Cola"></div><div class="item-info"><h3>Coca-Cola 1.5L</h3><div class="item-price">1.150 FCFA</div><button class="btn-comprar" onclick="sumar('Coca-Cola 1.5L',1150)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=300" alt="Champu"></div><div class="item-info"><h3>Champú Hidratante</h3><div class="item-price">2.200 FCFA</div><button class="btn-comprar" onclick="sumar('Champú',2200)">AÑADIR</button></div></div>
+            <div class="card-item"><div class="item-pic"><img src="https://images.unsplash.com/photo-1584622781564-1d9876a13d00?q=80&w=300" alt="Detergente"></div><div class="item-info"><h3>Detergente Pro</h3><div class="item-price">3.400 FCFA</div><button class="btn-comprar" onclick="sumar('Detergente',3400)">AÑADIR</button></div></div>
+        </div>
+    </section>
+
+    <!-- TIENDA POR CATEGORÍA -->
+    <section id="sec-tienda" class="hidden">
+        <div class="cat-header">
+            <span class="cat-icon" id="cat-icon-display"></span>
+            <h2 id="cat-title-display"></h2>
+        </div>
+        <div class="grid-store" id="tienda-render"></div>
+    </section>
+</main>
+
+<!-- BARRA INFERIOR: cesta central con curva SVG + paneles scrollables -->
+<nav class="nav-bar">
+    <!-- SVG con curva centrada (bump para la cesta) -->
+    <svg class="nav-curve-svg" viewBox="0 0 400 116" preserveAspectRatio="none">
+        <path d="M0,26 L162,26 C176,26 176,0 200,0 C224,0 224,26 238,26 L400,26 L400,116 L0,116 Z"/>
+    </svg>
+
+    <div class="nav-inner">
+        <!-- PANEL IZQUIERDO (direction:rtl → el más cercano a la cesta siempre visible) -->
+        <div class="nav-side-scroll nav-left">
+            <!-- Orden HTML: el primero en HTML aparece más a la derecha (RTL) = más cerca de la cesta -->
+            <button class="nav-button" id="n-panaderia" onclick="irTienda('panaderia','n-panaderia')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=100" alt="Pan"></div>
+                <span>Panadería</span>
+            </button>
+            <button class="nav-button" id="n-lacteos" onclick="irTienda('lacteos','n-lacteos')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1559598467-f8b76c8155d0?q=80&w=100" alt="Lácteos"></div>
+                <span>Lácteos</span>
+            </button>
+            <button class="nav-button" id="n-peces" onclick="irTienda('pescaderia','n-peces')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=100" alt="Pescado"></div>
+                <span>Pescado</span>
+            </button>
+            <button class="nav-button" id="n-carnes" onclick="irTienda('carnes','n-carnes')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=100" alt="Carnes"></div>
+                <span>Carnes</span>
+            </button>
+            <button class="nav-button" id="n-verduras" onclick="irTienda('verduras','n-verduras')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=100" alt="Verduras"></div>
+                <span>Verduras</span>
+            </button>
+            <button class="nav-button" id="n-frutas" onclick="irTienda('frutas','n-frutas')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=100" alt="Frutas"></div>
+                <span>Frutas</span>
+            </button>
+        </div>
+
+        <!-- CESTA CENTRAL FIJA -->
+        <div class="basket-center" onclick="abrirCesta()" aria-label="Abrir Cesta">
+            <div class="basket-round" id="cesta-btn-main">
+                <span class="basket-emoji">🛒</span>
+                <div class="count-badge" id="c-count">0</div>
+            </div>
+            <span class="basket-label">Mi cesta</span>
+        </div>
+
+        <!-- PANEL DERECHO (LTR → el más cercano a la cesta siempre visible) -->
+        <div class="nav-side-scroll nav-right">
+            <button class="nav-button" id="n-cereales" onclick="irTienda('cereales','n-cereales')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=100" alt="Cereales"></div>
+                <span>Cereales</span>
+            </button>
+            <button class="nav-button" id="n-bebidas" onclick="irTienda('bebidas','n-bebidas')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=100" alt="Bebidas"></div>
+                <span>Bebidas</span>
+            </button>
+            <button class="nav-button" id="n-congelados" onclick="irTienda('congelados','n-congelados')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1563636619-e9143da7973b?q=80&w=100" alt="Congelados"></div>
+                <span>Congelados</span>
+            </button>
+            <button class="nav-button" id="n-higiene" onclick="irTienda('higiene','n-higiene')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=100" alt="Higiene"></div>
+                <span>Higiene</span>
+            </button>
+            <button class="nav-button" id="n-limpieza" onclick="irTienda('limpieza','n-limpieza')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=100" alt="Limpieza"></div>
+                <span>Limpieza</span>
+            </button>
+            <button class="nav-button" id="n-todo" onclick="irTienda('todos','n-todo')">
+                <div class="nav-img-wrap"><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=100" alt="Todo"></div>
+                <span>Todo</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- MODAL CESTA -->
+<div id="modal-cesta">
+    <div class="cesta-popup">
+        <div class="header-cesta">
+            <h2>🛒 Tu Cesta</h2>
+            <span class="close-x" onclick="cerrarCesta()">✕</span>
+        </div>
+        
+        <div class="cesta-body">
+            <div id="lista-cesta"></div>
+
+            <div class="cesta-form">
+                <span class="form-label">📍 Método de Entrega</span>
+                <div class="delivery-options">
+                    <label class="delivery-option">
+                        <input type="radio" name="metodo" value="local" checked onchange="toggleDireccion()">
+                        <div class="delivery-box"><i class="fa-solid fa-shop"></i> Recojo en Local</div>
+                    </label>
+                    <label class="delivery-option">
+                        <input type="radio" name="metodo" value="domicilio" onchange="toggleDireccion()">
+                        <div class="delivery-box"><i class="fa-solid fa-truck-ramp-box"></i> Envío a Domicilio</div>
+                    </label>
+                </div>
+
+                <div id="form-domicilio" class="hidden">
+                    <span class="form-label">🏠 Dirección en Guinea Ecuatorial</span>
+                    <textarea id="dir-dest" class="form-input form-textarea" placeholder="Indicaciones detalladas (Ej: Barrio, cerca de..., color casa, calle...)"></textarea>
+                </div>
+
+                <span class="form-label">👤 Datos de quien recibe / recoge</span>
+                <input type="text" id="nombre-dest" class="form-input" placeholder="Nombre completo">
+                <input type="tel" id="tel-dest" class="form-input" placeholder="Teléfono de contacto">
+
+                <span class="form-label">💳 Modo de Pago</span>
+                <select id="pago-origen" class="form-input">
+                    <option value="" disabled selected>¿Cómo realizarás el pago?</option>
+                    <option value="Pago al recibir (Efectivo)">Pagar al recibir pedido (Efectivo)</option>
+                    <option value="Pago en local (Efectivo)">Pagar en el local (Efectivo)</option>
+                    <option value="Guinea Ecuatorial (Local)">Transferencia Local (G.E.)</option>
+                    <option value="España / Europa">España / Europa (Familiar)</option>
+                    <option value="Estados Unidos / América">Estados Unidos / América (Familiar)</option>
+                    <option value="Móvil Money / Dinero Móvil">Móvil Money / Dinero Móvil</option>
+                    <option value="Otro">Otro origen</option>
+                </select>
+
+                <div class="file-upload-wrap">
+                    <input type="file" id="pago-file" accept="image/*,application/pdf" onchange="mostrarArchivo(this)">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Subir Foto o PDF del Pago</span>
+                    <small id="file-name-display"></small>
+                </div>
+                <input type="text" id="pago-ref" class="form-input" placeholder="Nota adicional (Ej: Pagado por M-Pesa)">
+            </div>
+        </div>
+
+        <div class="footer-cesta">
+            <div class="total-row">
+                <span class="total-label">Total</span>
+                <span id="p-total">0 FCFA</span>
+            </div>
+            <button class="btn-confirmar" onclick="enviarWhatsApp()">
+                Confirmar por WhatsApp ✅
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ══════════════════════════════════════
+       BASE DE PRODUCTOS — 12 categorías
+    ══════════════════════════════════════ */
+    const catInfo = {
+        frutas:     { icon: '🍍', label: 'Frutas' },
+        verduras:   { icon: '🥦', label: 'Verduras' },
+        carnes:     { icon: '🥩', label: 'Carnes' },
+        pescaderia: { icon: '🐟', label: 'Pescado & Marisco' },
+        lacteos:    { icon: '🥛', label: 'Lácteos & Huevos' },
+        panaderia:  { icon: '🥖', label: 'Panadería' },
+        cereales:   { icon: '🥣', label: 'Cereales & Conservas' },
+        bebidas:    { icon: '🥤', label: 'Bebidas' },
+        congelados: { icon: '❄️', label: 'Congelados' },
+        higiene:    { icon: '🧴', label: 'Higiene Personal' },
+        limpieza:   { icon: '🧹', label: 'Limpieza del Hogar' },
+        todos:      { icon: '🛒', label: 'Todos los Productos' }
+    };
+
+    const productos = {
+        frutas: [
+            {n:'Plátano Macho (racimo)', p:1200, img:'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?q=80&w=300'},
+            {n:'Piña Tropical Fresca', p:1500, img:'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?q=80&w=300'},
+            {n:'Mango Ataulfo', p:900, img:'https://images.unsplash.com/photo-1553279768-865429fa0078?q=80&w=300'},
+            {n:'Papaya Grande', p:1800, img:'https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?q=80&w=300'},
+            {n:'Naranjas 1kg', p:1100, img:'https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=300'},
+            {n:'Mix Frutas Tropicales', p:2100, img:'https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=300'},
+        ],
+        verduras: [
+            {n:'Tomates Frescos 1kg', p:850, img:'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=300'},
+            {n:'Cebolla Morada 1kg', p:700, img:'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?q=80&w=300'},
+            {n:'Pimiento Rojo', p:950, img:'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?q=80&w=300'},
+            {n:'Brócoli Fresco', p:1300, img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=300'},
+            {n:'Zanahoria 1kg', p:600, img:'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?q=80&w=300'},
+            {n:'Ajo Fresco (cabeza)', p:400, img:'https://images.unsplash.com/photo-1540148428701-8a686d4945a3?q=80&w=300'},
+        ],
+        carnes: [
+            {n:'Bistec Ternera 1kg', p:4800, img:'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=300'},
+            {n:'Pollo Entero Fresco', p:3500, img:'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?q=80&w=300'},
+            {n:'Carne Picada Extra', p:4200, img:'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?q=80&w=300'},
+            {n:'Muslos de Pollo 1kg', p:2800, img:'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=300'},
+            {n:'Chuletas de Cordero', p:5600, img:'https://images.unsplash.com/photo-1611599538835-b52a8c2f9de5?q=80&w=300'},
+            {n:'Salchicha Ahumada', p:2200, img:'https://images.unsplash.com/photo-1619878608733-b1600f0c8ce6?q=80&w=300'},
+        ],
+        pescaderia: [
+            {n:'Salmón Fresco (Filete)', p:5500, img:'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=300'},
+            {n:'Gambas Frescas 1kg', p:7200, img:'https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?q=80&w=300'},
+            {n:'Tilapia Entera Fresca', p:3200, img:'https://images.unsplash.com/photo-1559847844-5315695dadae?q=80&w=300'},
+            {n:'Sardinas Frescas 500g', p:1800, img:'https://images.unsplash.com/photo-1612200067286-6cf665be1c44?q=80&w=300'},
+            {n:'Calamares Limpios', p:4900, img:'https://images.unsplash.com/photo-1551751299-1b51cab2694c?q=80&w=300'},
+        ],
+        lacteos: [
+            {n:'Leche Entera 1L', p:1300, img:'https://images.unsplash.com/photo-1550583724-125581fe2f8a?q=80&w=300'},
+            {n:'Queso Curado Local', p:2400, img:'https://images.unsplash.com/photo-1552763405-1749d41f0488?q=80&w=300'},
+            {n:'Docena de Huevos', p:1800, img:'https://images.unsplash.com/photo-1582722872445-41ea50bf5844?q=80&w=300'},
+            {n:'Yogur Natural (pack 4)', p:1600, img:'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?q=80&w=300'},
+            {n:'Mantequilla 250g', p:1950, img:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?q=80&w=300'},
+            {n:'Nata Líquida 200ml', p:1100, img:'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?q=80&w=300'},
+        ],
+        panaderia: [
+            {n:'Pan de Baguette', p:450, img:'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300'},
+            {n:'Croissants (x6)', p:1800, img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=300'},
+            {n:'Pan Integral de Molde', p:1200, img:'https://images.unsplash.com/photo-1598373182133-52452f7691ef?q=80&w=300'},
+            {n:'Bizcocho Casero', p:2200, img:'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?q=80&w=300'},
+            {n:'Galletas Mantequilla', p:900, img:'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=300'},
+        ],
+        cereales: [
+            {n:'Arroz Basmati 1kg', p:1800, img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=300'},
+            {n:'Harina de Trigo 1kg', p:1100, img:'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=300'},
+            {n:'Lentejas 500g', p:950, img:'https://images.unsplash.com/photo-1608364331053-b61c50e18b4e?q=80&w=300'},
+            {n:'Copos de Avena 500g', p:1400, img:'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=300'},
+            {n:'Frijoles Negros 1kg', p:1200, img:'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=300'},
+            {n:'Pasta Penne 500g', p:800, img:'https://images.unsplash.com/photo-1551462147-37885acc36f1?q=80&w=300'},
+        ],
+        bebidas: [
+            {n:'Agua Mineral 1.5L', p:650, img:'https://images.unsplash.com/photo-1551028150-64b9f398f678?q=80&w=300'},
+            {n:'Coca-Cola 1.5L', p:1150, img:'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=300'},
+            {n:'Zumo de Naranja 1L', p:1400, img:'https://images.unsplash.com/photo-1600271886742-f049cd451bba?q=80&w=300'},
+            {n:'Cerveza Mutzig (Botella)', p:900, img:'https://images.unsplash.com/photo-1518176258769-f227c798150e?q=80&w=300'},
+            {n:'Té Lipton (caja 25u)', p:1100, img:'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=300'},
+            {n:'Café Molido 250g', p:2800, img:'https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=300'},
+        ],
+        congelados: [
+            {n:'Pollo Congelado 2kg', p:4500, img:'https://images.unsplash.com/photo-1563636619-e9143da7973b?q=80&w=300'},
+            {n:'Gambas Congeladas 1kg', p:5800, img:'https://images.unsplash.com/photo-1559547787-a1f769c5f1dc?q=80&w=300'},
+            {n:'Guisantes Congelados 500g', p:1200, img:'https://images.unsplash.com/photo-1563636619-e9143da7973b?q=80&w=300'},
+            {n:'Pizza Margarita', p:3200, img:'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=300'},
+            {n:'Helado Vainilla 1L', p:2500, img:'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?q=80&w=300'},
+        ],
+        higiene: [
+            {n:'Champú Hidratante 400ml', p:2200, img:'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=300'},
+            {n:'Jabón de Baño (x3)', p:1400, img:'https://images.unsplash.com/photo-1600857062241-98e5dba7f733?q=80&w=300'},
+            {n:'Pasta de Dientes 100ml', p:900, img:'https://images.unsplash.com/photo-1559591935-b6da9d9bab2d?q=80&w=300'},
+            {n:'Desodorante Roll-On', p:1800, img:'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?q=80&w=300'},
+            {n:'Papel Higiénico (x12)', p:3500, img:'https://images.unsplash.com/photo-1583947215259-38e31be8751f?q=80&w=300'},
+            {n:'Crema Hidratante 200ml', p:2600, img:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=300'},
+        ],
+        limpieza: [
+            {n:'Detergente Líquido 2L', p:3400, img:'https://images.unsplash.com/photo-1584622781564-1d9876a13d00?q=80&w=300'},
+            {n:'Jabón Multiusos 500ml', p:1100, img:'https://images.unsplash.com/photo-1563453392212-326f5e854473?q=80&w=300'},
+            {n:'Lejía Concentrada 1L', p:1500, img:'https://images.unsplash.com/photo-1585559700398-1385b3a8aeb6?q=80&w=300'},
+            {n:'Fregasuelos Pino 1L', p:1800, img:'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=300'},
+            {n:'Esponja de Fregar (x3)', p:700, img:'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?q=80&w=300'},
+            {n:'Bolsas Basura (x30)', p:1200, img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=300'},
+        ]
+    };
+
+    /* ══════════════════════════════════════
+       LÓGICA DE LA APP
+    ══════════════════════════════════════ */
+    let cart = [], total = 0;
+
+    function toggleMenu() {
+        const menu = document.getElementById('menu-lateral');
+        const overlay = document.getElementById('overlay');
+        menu.classList.toggle('active');
+        overlay.style.display = menu.classList.contains('active') ? 'block' : 'none';
+    }
+
+    function verInicio() {
+        document.getElementById('sec-inicio').classList.remove('hidden');
+        document.getElementById('sec-tienda').classList.add('hidden');
+        document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+        document.getElementById('main-scroller').scrollTop = 0;
+    }
+
+    function irTienda(cat, id) {
+        document.getElementById('sec-inicio').classList.add('hidden');
+        document.getElementById('sec-tienda').classList.remove('hidden');
+        document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+        if (id) document.getElementById(id).classList.add('active');
+
+        const info = catInfo[cat] || { icon: '🛒', label: cat };
+        document.getElementById('cat-icon-display').textContent = info.icon;
+        document.getElementById('cat-title-display').textContent = info.label;
+
+        let lista = cat === 'todos'
+            ? [].concat(...Object.values(productos))
+            : (productos[cat] || []);
+
+        document.getElementById('tienda-render').innerHTML = lista.map(i =>
+            `<div class="card-item">
+                <div class="item-pic"><img src="${i.img}" alt="${i.n}" loading="lazy"></div>
+                <div class="item-info">
+                    <h3>${i.n}</h3>
+                    <div class="item-price">${i.p.toLocaleString()} FCFA</div>
+                    <button class="btn-comprar" onclick="sumar('${i.n.replace(/'/g,"\\'")}', ${i.p})">AÑADIR</button>
+                </div>
+            </div>`
+        ).join('');
+        document.getElementById('main-scroller').scrollTop = 0;
+    }
+
+    function renderCesta() {
+        document.getElementById('c-count').innerText = cart.length;
+        document.getElementById('p-total').innerText = total.toLocaleString() + ' FCFA';
+        const l = document.getElementById('lista-cesta');
+        l.innerHTML = cart.map((item, i) =>
+            `<div class="item-cesta">
+                <div class="item-cesta-info"><b>${item.nombre}</b><br><small>${item.precio.toLocaleString()} FCFA</small></div>
+                <button class="btn-borrar" onclick="borrar(${i})">✕</button>
+            </div>`
+        ).join('');
+    }
+
+    function showToast() {
+        const t = document.getElementById('toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1500);
+    }
+
+    function sumar(nombre, precio) {
+        cart.push({ nombre, precio });
+        total += precio;
+        renderCesta();
+        
+        // Animación cesta
+        const btn = document.getElementById('cesta-btn-main');
+        btn.classList.add('anim-pop');
+        setTimeout(() => btn.classList.remove('anim-pop'), 400);
+
+        // Feedback visual
+        showToast();
+    }
+
+    function borrar(i) {
+        total -= cart[i].precio;
+        cart.splice(i, 1);
+        renderCesta();
+        if (cart.length === 0) cerrarCesta();
+    }
+
+    function abrirCesta() {
+        if (cart.length > 0) {
+            renderCesta();
+            document.getElementById('modal-cesta').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        } else {
+            alert('¡La cesta está vacía! Añade productos primero.');
+        }
+    }
+
+    function cerrarCesta() {
+        document.getElementById('modal-cesta').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    function toggleDireccion() {
+        const met = document.querySelector('input[name="metodo"]:checked').value;
+        const formDom = document.getElementById('form-domicilio');
+        if (met === 'domicilio') {
+            formDom.classList.remove('hidden');
+        } else {
+            formDom.classList.add('hidden');
+        }
+    }
+
+    function mostrarArchivo(input) {
+        const display = document.getElementById('file-name-display');
+        if (input.files && input.files[0]) {
+            display.innerText = "📄 Seleccionado: " + input.files[0].name;
+        } else {
+            display.innerText = "";
+        }
+    }
+
+    function enviarWhatsApp() {
+        const metodo = document.querySelector('input[name="metodo"]:checked').value;
+        const nombreDest = document.getElementById('nombre-dest').value.trim();
+        const telDest = document.getElementById('tel-dest').value.trim();
+        const dirDest = document.getElementById('dir-dest').value.trim();
+        const pagoOrigen = document.getElementById('pago-origen').value;
+        const pagoFile = document.getElementById('pago-file').files[0];
+        const pagoRef = document.getElementById('pago-ref').value.trim();
+
+        if (!nombreDest || !telDest) {
+            alert('Por favor, indica el nombre y teléfono de quien recibirá el pedido.');
+            return;
+        }
+
+        if (metodo === 'domicilio' && !dirDest) {
+            alert('Por favor, indica la dirección para el envío.');
+            return;
+        }
+
+        if (!pagoOrigen) {
+            alert('Por favor, selecciona cómo realizarás el pago.');
+            return;
+        }
+
+        let m = '¡Hola Minimarket Mbatung! 🛒\n';
+        m += 'He realizado un pedido desde la web:\n\n';
+        
+        m += '📦 PRODUCTOS:\n';
+        cart.forEach(i => m += `• ${i.nombre} — ${i.precio.toLocaleString()} FCFA\n`);
+        m += `\n💰 TOTAL: ${total.toLocaleString()} FCFA\n\n`;
+
+        m += `📍 MÉTODO: ${metodo === 'local' ? 'Recogida en Local' : 'Envio a Domicilio'}\n`;
+        m += `👤 A nombre de: ${nombreDest}\n`;
+        m += `📞 Teléfono: ${telDest}\n`;
+        
+        if (metodo === 'domicilio') {
+            m += `🏠 Dirección/Indicaciones: ${dirDest}\n`;
+        }
+
+        m += `\n💳 PAGO:\n`;
+        m += `• Opción: ${pagoOrigen}\n`;
+        if (pagoFile) {
+            m += `• Comprobante: [ADJUNTO EN SIGUIENTE MENSAJE]\n`;
+        }
+        if (pagoRef) {
+            m += `• Nota: ${pagoRef}\n`;
+        }
+
+        m += '\n¿Me confirman la recepción del pedido? Gracias.';
+
+        // Numero de Minimarket Mbatung
+        const tel = '240333000000'; // Sustituir por el número oficial de la tienda
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(m)}`, '_blank');
+    }
+
+    // Cerrar modal cesta al hacer clic fuera
+    document.getElementById('modal-cesta').addEventListener('click', function(e) {
+        if (e.target === this) cerrarCesta();
+    });
+
+    /* ── HERO SLIDER ── */
+    (function() {
+        const slides = document.querySelectorAll('.hero-slide');
+        const dotsContainer = document.getElementById('hero-dots');
+        let current = 0;
+        // Crear dots
+        slides.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+            d.onclick = () => goTo(i);
+            dotsContainer.appendChild(d);
+        });
+        function goTo(n) {
+            slides[current].classList.remove('active');
+            dotsContainer.children[current].classList.remove('active');
+            current = n % slides.length;
+            slides[current].classList.add('active');
+            dotsContainer.children[current].classList.add('active');
+        }
+        setInterval(() => goTo(current + 1), 4000);
+    })();
+
+    /* ── FLASH TIMER (cuenta atrás hasta medianoche) ── */
+    (function() {
+        function tick() {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            let diff = Math.floor((midnight - now) / 1000);
+            const h = String(Math.floor(diff / 3600)).padStart(2,'0');
+            diff %= 3600;
+            const m = String(Math.floor(diff / 60)).padStart(2,'0');
+            const s = String(diff % 60).padStart(2,'0');
+            const el = document.getElementById('flash-timer');
+            if (el) el.textContent = h + ':' + m + ':' + s;
+        }
+        tick();
+        setInterval(tick, 1000);
+    })();
+</script>
+</body>
+</html>
